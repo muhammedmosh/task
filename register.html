@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - PlanIt</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+  <form id="registerForm" class="bg-white p-6 rounded shadow-md w-96">
+    <h2 class="text-2xl font-bold text-center text-gray-700">Register</h2>
+    <div class="mt-4">
+      <input type="email" id="email" placeholder="Email" required class="w-full p-2 border rounded" />
+    </div>
+    <div class="mt-4">
+      <input type="password" id="password" placeholder="Password" required class="w-full p-2 border rounded" />
+    </div>
+    <div class="mt-4">
+      <select id="role" required class="w-full p-2 border rounded">
+        <option value="" disabled selected>Choose Role</option>
+        <option value="admin">Admin</option>
+        <option value="member">Member</option>
+      </select>
+    </div>
+    <button type="submit" class="w-full mt-4 bg-blue-600 text-white py-2 rounded">Register</button>
+    <p class="mt-4 text-gray-600 text-center">
+        Already have an account?
+        <a href="login.html" class="text-blue-600 hover:underline">Login</a>
+      </p>
+  </form>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAbURzMdeO-6d2srBSiYXqZkvn8l9Z9G-U",
+      authDomain: "planit-82761.firebaseapp.com",
+      projectId: "planit-82761",
+      storageBucket: "planit-82761.appspot.com",
+      messagingSenderId: "631213837702",
+      appId: "1:631213837702:web:69096945b77502d1557007"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Register form submission event
+    const registerForm = document.getElementById("registerForm");
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      // Get form values
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+
+      try {
+        // Create new user with email and password
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+
+        // Save the role information to Firestore
+        await firebase.firestore().collection("users").doc(userCredential.user.uid).set({
+          email: email,
+          role: role
+        });
+
+        // Alert and redirect to login page
+        alert("Registration successful!");
+        window.location.href = "login.html";
+      } catch (error) {
+        console.error("Error during registration:", error.message);
+      }
+    });
+  </script>
+</body>
+</html>

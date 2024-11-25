@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - PlanIt</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
+
+</head>
+<body class="flex h-screen bg-gray-100">
+  <!-- Sidebar -->
+  <aside class="w-1/4 bg-blue-600 text-white p-6">
+    <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
+    <ul>
+      <li class="mb-4"><button id="addTaskBtn" class="w-full text-left">Add Task</button></li>
+      <li class="mb-4"><button id="viewTasksBtn" class="w-full text-left">View Tasks</button></li>
+      <li class="mb-4"><button id="viewMembersBtn" class="w-full text-left">View Members</button></li>
+      <li><button id="logoutBtn" class="w-full text-left text-red-500">Logout</button></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="w-3/4 p-6 overflow-y-auto">
+    <div id="content">
+      <h2 class="text-3xl font-bold text-gray-800">Welcome, Admin</h2>
+      <p class="mt-4 text-gray-600">Select an option from the sidebar to get started.</p>
+    </div>
+  </main>
+
+  <!-- Member Statistics Modal -->
+  <div id="statsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded shadow-lg w-3/4">
+      <h3 class="text-xl font-bold text-gray-800">Member Statistics</h3>
+      <select id="memberSelect" class="w-full p-2 border rounded mb-4">
+        <option value="" disabled selected>Select a Member</option>
+      </select>
+      <div class="mt-4 flex space-x-4">
+        <button class="filterBtn bg-blue-600 text-white px-4 py-2 rounded" data-filter="day">Daily</button>
+        <button class="filterBtn bg-blue-600 text-white px-4 py-2 rounded" data-filter="month">Monthly</button>
+        <button class="filterBtn bg-blue-600 text-white px-4 py-2 rounded" data-filter="year">Yearly</button>
+      </div>
+      <div id="chartContainer" class="mt-6">
+        <canvas id="taskChart" width="400" height="200"></canvas>
+      </div>
+      <button id="exportCSVBtn" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">Export as CSV</button>
+      <button id="closeStatsModal" class="mt-4 bg-red-600 text-white px-4 py-2 rounded">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAbURzMdeO-6d2srBSiYXqZkvn8l9Z9G-U",
+      authDomain: "planit-82761.firebaseapp.com",
+      projectId: "planit-82761",
+      storageBucket: "planit-82761.appspot.com",
+      messagingSenderId: "631213837702",
+      appId: "1:631213837702:web:69096945b77502d1557007"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const { Timestamp } = firebase.firestore;
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    const viewMembersBtn = document.getElementById("viewMembersBtn");
+    const statsModal = document.getElementById("statsModal");
+    const closeStatsModal = document.getElementById("closeStatsModal");
+    const memberSelect = document.getElementById("memberSelect");
+    const exportCSVBtn = document.getElementById("exportCSVBtn");
+
+    let chart;
+
+    // Load Members into Dropdown
+    async function loadMembers() {
+      const members = [];
+      const q = query(collection(db, "users"), where("role", "==", "member"));
+      const snapshot = await getDocs(q);
+      snapshot.forEach((doc) => {
+        members.push({ id: doc.id, email: doc.data().email });
+      });
+
+      memberSelect.innerHTML = `<option value="" disabled selected>Select a Member</option>`;
+      members.forEach((member) => {
+        const option = document.createElement("option");
+        option.value = member.id;
+        option.textContent = member.email;
+        memberSelect.appendChild(option);
+      });
+    }
+
+    // Show Statistics Modal
+    viewMembersBtn.addEventListener("click", async () => {
+      await loadMembers();
+      statsModal.classList.remove("hidden");
+    });
+
+    // Close Statistics Modal
+    closeStatsModal.addEventListener("click", () => {
+      statsModal.classList.add("hidden");
+    });
+
+    // Fetch and Display Data
+    async function fetchAndDisplayData(memberId, filter) {
+      let startDate, endDate;
+      const now = new Date();
+      if (filter === "day") {
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        endDate = new Date(now.setHours(23, 59, 59, 999));
+      } else if (filter === "month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      } else if (filter === "year") {
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31);
+      }
+
+      const tasksQuery = query(
+        collection(db, "tasks"),
+        where("assignedTo", "==", memberId),
+        where("createdAt", ">=", Timestamp.fromDate(startDate)),
+        where("createdAt", "<=", Timestamp.fromDate(endDate))
+      );
+
+      const snapshot = await getDocs(tasksQuery);
+      const tasks = [];
+      const statuses = { completed: 0, pending: 0, overdue: 0 };
+
+      snapshot.forEach((doc) => {
+        tasks.push(doc.data());
+        statuses[doc.data().status]++;
+      });
+
+      displayChart(statuses);
+
+      exportCSVBtn.addEventListener("click", () => exportAsCSV(tasks));
+    }
+
+    // Display Chart
+    function displayChart(data) {
+      const ctx = document.getElementById("taskChart").getContext("2d");
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: ["Completed", "Pending", "Overdue"],
+          datasets: [
+            {
+              data: [data.completed, data.pending, data.overdue],
+              backgroundColor: ["#4caf50", "#ff9800", "#f44336"],
+            },
+          ],
+        },
+      });
+    }
+
+    // Export as CSV
+    function exportAsCSV(tasks) {
+      const rows = [["Task Name", "Status", "Created At"]];
+      tasks.forEach((task) => {
+        rows.push([task.taskName, task.status, task.createdAt.toDate().toISOString()]);
+      });
+
+      const csvContent =
+        "data:text/csv;charset=utf-8," +
+        rows.map((row) => row.join(",")).join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "tasks.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Filter Statistics
+    document.querySelectorAll(".filterBtn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const filter = e.target.dataset.filter;
+        const memberId = memberSelect.value;
+        if (!memberId) {
+          alert("Please select a member first.");
+          return;
+        }
+        fetchAndDisplayData(memberId, filter);
+      });
+    });
+
+    // Logout
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "login.html";
+      } catch (error) {
+        console.error("Logout error:", error.message);
+      }
+    });
+  </script>
+</body>
+</html>
