@@ -1,0 +1,219 @@
+/* General Styles */
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+    
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: grey;
+      color: black;
+    }
+    
+    .navbar .logo {
+      display: flex;
+      align-items: center;
+    }
+    
+    .navbar .logo img {
+      height: 50px;
+      margin-right: 10px;
+    }
+    
+    .navbar .nav-links {
+      display: flex;
+      list-style: none;
+    }
+    
+    .navbar .nav-links li {
+      margin-left: 15px;
+      position: relative;
+    }
+    
+    .navbar .nav-links a {
+      color: black;
+      text-decoration: none;
+      padding: 5px 10px;
+    }
+    
+    .navbar .nav-links .btn {
+      background: #576b80;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: goldenrod;
+    }
+    .navbar .nav-links .btn:hover{
+      background-color: rgb(104, 104, 104);
+    }
+  
+    .navbar .nav-links .btn2 {
+      background: goldenrod;
+      padding: 10px 30px;
+      border-radius: 5px;
+      color: black;
+    }
+    .navbar .nav-links .btn2:hover{
+      background-color: gold;
+    }
+  
+    .navbar .dropdown {
+      display: none;
+      position: absolute;
+      top: 30px;
+      list-style: none;
+      background: #9b9999;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    
+    .navbar .nav-links li:hover .dropdown {
+      display: block;
+    }
+    
+    .hero-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #f4f4f4;
+    }
+    
+    .hero-text h1 {
+      font-size: 3em;
+      color: black;
+    }
+    .hero-section video {
+      max-width: 700px;
+      height: auto;
+      flex: 1 1 400px;
+      
+    }
+    
+    .hero-text .btn-primary {
+      padding: 10px 20px;
+      background: #576b80;
+      color: goldenrod;
+      text-decoration: none;
+      border-radius: 5px;
+      
+    }
+    .hero-text .btn-primary:hover{
+      background-color: #58636f;
+    }
+    
+    
+    .features-section {
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    .feature-item {
+      text-align: center;
+    }
+    
+    .cta-section {
+      padding: 30px;
+      background: goldenrod;
+      color: black;
+      text-align: center;
+    }
+    .cta-section .btn-primary{
+      text-decoration: none;
+      background-color: black;
+      color: goldenrod;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .cta-section .btn-primary:hover{
+      background-color: rgb(69, 64, 64);
+    }
+    
+    .footer-container {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+      background: grey;
+      color: black;
+    }
+    .footer-container a{
+      text-decoration: none;
+      color: goldenrod;
+      list-style: none;
+    }
+    .footer-container a:hover{
+      background-color: black;
+      padding: 5px;
+      border-radius: 5px;
+    }
+    
+    @media (max-width: 768px) {
+      header .navbar {
+        flex-direction: column;
+      }
+    
+      header .navbar ul {
+        flex-direction: column;
+        display: none;
+        background-color: #7e8180;
+        width: 100%;
+        text-align: center;
+        justify-content: space-between;
+      }
+    
+      header .navbar ul.show {
+        display: flex;
+      }
+    
+      .hero-section {
+        flex-direction: column;
+      }
+    
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    
+      footer .footer-container {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+    
+    /* Mobile Optimization */
+    @media (max-width: 480px) {
+      .hero-section .hero-text h1 {
+        font-size: 24px;
+      }
+    
+      .hero-section .hero-text p {
+        font-size: 16px;
+      }
+    
+      .features-grid .feature-item h3 {
+        font-size: 20px;
+      }
+    
+      .features-grid .feature-item p {
+        font-size: 14px;
+      }
+    
+      footer p {
+        font-size: 12px;
+      }
+    }
+    

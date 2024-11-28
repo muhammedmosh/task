@@ -1,37 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register - PlanIt</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      background-image: url('sign-up.jpg');
+      background-size: cover; /* Ensures the image covers the entire background */
+      background-repeat: no-repeat; /* Prevents the image from repeating */
+      background-position: center; /* Centers the image */
+      min-height: 100vh; /* Ensures the body covers the full height of the viewport */
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex justify-center items-center h-screen">
-  <form id="registerForm" class="bg-white p-6 rounded shadow-md w-96">
-    <h2 class="text-2xl font-bold text-center text-gray-700">Register</h2>
-    <div class="mt-4">
-      <input type="email" id="email" placeholder="Email" required class="w-full p-2 border rounded" />
+<body class="bg-gray-100">
+  <nav class="navbar">
+    <div class="logo">
+      <img src="Planit.png" alt="PlanIt Logo">
+      <span>PlanIt</span>
     </div>
-    <div class="mt-4">
-      <input type="password" id="password" placeholder="Password" required class="w-full p-2 border rounded" />
-    </div>
-    <div class="mt-4">
-      <select id="role" required class="w-full p-2 border rounded">
-        <option value="" disabled selected>Choose Role</option>
-        <option value="admin">Admin</option>
-        <option value="member">Member</option>
-      </select>
-    </div>
-    <button type="submit" class="w-full mt-4 bg-blue-600 text-white py-2 rounded">Register</button>
-    <p class="mt-4 text-gray-600 text-center">
-        Already have an account?
-        <a href="login.html" class="text-blue-600 hover:underline">Login</a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="hover:underline">Home</a></li>
+      <li><a href="login.html" class="hover:underline bg-amber-600 ">Login</a></li>
+    </ul>
+  </nav>  
+  <div class="container mx-auto p-6 max-w-md bg-gray-100 bg-opacity-50 rounded-lg shadow-lg mt-10 mb-10">
+    <h1 class="text-3xl font-bold text-black-800 mb-6 text-center">Register</h1>
+    <form id="registerForm">
+        <div>
+          <label for="firstName" class="block text-sm font-bold">First Name:</label>
+          <input type="text" id="firstName" class="w-full border rounded p-2" required />
+        </div>
+        <div>
+          <label for="middleName" class="block text-sm font-bold">Middle Name (Optional):</label>
+          <input type="text" id="middleName" class="w-full border rounded p-2" />
+        </div>
+        <div>
+          <label for="surname" class="block text-sm font-bold">Surname:</label>
+          <input type="text" id="surname" class="w-full border rounded p-2" required />
+        </div>
+        <div>
+          <label for="phone" class="block text-sm font-bold">Phone Number:</label>
+          <input type="tel" id="phone" class="w-full border rounded p-2" required />
+        </div>
+        <div>
+          <label for="email" class="block text-sm font-bold">Email:</label>
+          <input type="email" id="email" class="w-full border rounded p-2" required />
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-bold">Password:</label>
+          <input type="password" id="password" class="w-full border rounded p-2" required />
+        </div>    
+      <div class="mb-4">
+        <label for="role" class="block text-sm font-bold">Choose Role</label>
+        <select id="role" class="w-full p-2 border rounded">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit" class="w-full bg-gray-600 text-amber-600 py-2 rounded hover:bg-gray-900">Register</button>
+      <p class="text-center mt-4 text-gray-600">
+        Already have an account? <a href="login.html" class="text-amber-800 hover:underline">Login</a>
       </p>
-  </form>
-
+    </form>
+  </div>
+  <footer>
+    <div class="footer-container">
+      <div class="footer-about">
+        <h3>About PlanIt</h3>
+        <p>Your all-in-one solution for personal and professional task management.</p>
+      </div>
+      <div class="footer-links">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="login.html">Login</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h3>Contact Us</h3>
+        <p>Email: support@planit.com</p>
+        <p>Phone: +123 456 7890</p>
+      </div>
+    </div>
+    <p>© 2024 PlanIt. All rights reserved.</p>
+  </footer>
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -54,27 +113,39 @@
       e.preventDefault();
       
       // Get form values
+      const firstName = document.getElementById("firstName").value.trim();
+      const middleName = document.getElementById("middleName").value.trim();
+      const surname = document.getElementById("surname").value.trim();
+      const phone = document.getElementById("phone").value.trim();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       const role = document.getElementById("role").value;
 
       try {
-        // Create new user with email and password
-        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+  // Create new user with email and password
+  const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+  const user = userCredential.user; // Get the user object
 
-        // Save the role information to Firestore
-        await firebase.firestore().collection("users").doc(userCredential.user.uid).set({
-          email: email,
-          role: role
-        });
+  // Update user's profile
+  await user.updateProfile({ displayName: firstName });
 
-        // Alert and redirect to login page
-        alert("Registration successful!");
-        window.location.href = "login.html";
-      } catch (error) {
-        console.error("Error during registration:", error.message);
-      }
-    });
-  </script>
+  // Save the role information to Firestore
+  await firebase.firestore().collection("users").doc(user.uid).set({
+    firstName,
+    middleName,
+    surname,
+    phone,
+    email: email,
+    role: role,
+    createdAt: firebase.firestore.Timestamp.now(),
+  });
+
+  // Alert and redirect to login page
+  alert("Registration successful!");
+  window.location.href = "login.html";
+} catch (error) {
+  alert("Error during registration: " + error.message);
+}})
+</script>
 </body>
 </html>

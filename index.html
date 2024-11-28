@@ -1,48 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PlanIt - Task Management</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.25.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.25.0/firebase-auth.js"></script>
+  <script src="firebase-config.js"></script> <!-- Your Firebase configuration -->
 </head>
-<body class="bg-gray-100">
-  <header class="bg-white shadow">
-    <nav class="container mx-auto flex justify-between items-center py-4">
-      <div class="text-2xl font-bold text-blue-600">PlanIt</div>
-      <ul class="flex space-x-6">
-        <li><a href="#about" class="text-gray-700 hover:text-blue-600">About Us</a></li>
-        <li><a href="#features" class="text-gray-700 hover:text-blue-600">Features</a></li>
-        <li><a href="login.html" class="text-gray-700 hover:text-blue-600">Login</a></li>
-        <li><a href="register.html" class="text-gray-700 hover:text-blue-600">Register</a></li>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <img src="Planit.png" alt="PlanIt Logo">
+        <span>PlanIt</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#" class="restricted-link">About us</a></li>
+        <li><a href="#features" class="restricted-link">Features</a></li>
+        <li><a href="login.html" class="btn">Login</a></li>
+        <li><a href="register.html" class="btn2">Get Started</a></li>
       </ul>
     </nav>
   </header>
-  <main class="container mx-auto mt-8">
-    <section id="about" class="text-center py-12">
-      <h1 class="text-4xl font-bold text-gray-800">Welcome to PlanIt</h1>
-      <p class="mt-4 text-gray-600">Streamline your task management process for admins and members.</p>
+
+  <main>
+    <section class="hero-section animate__animated animate__fadeIn">
+      <div class="hero-text">
+        <h1>Organize Your Life Seamlessly</h1>
+        <p>PlanIt helps you manage your tasks, plan personal goals, and stay on top of everything that matters.</p>
+        <a href="register.html" class="btn-primary">Get Started</a>
+      </div>
+        <video id="videos"autoplay loop muted>
+          <source src="Welcome to PlanIt.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
     </section>
-    <section id="features" class="text-center py-12 bg-gray-200">
-      <h2 class="text-3xl font-bold text-gray-800">Features</h2>
-      <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="p-6 bg-white shadow rounded">
-          <h3 class="text-xl font-bold text-gray-700">Admin Tools</h3>
-          <p class="mt-2 text-gray-600">Manage tasks, monitor progress, and provide feedback.</p>
+
+    <section id="features" class="features-section">
+      <h2>Features</h2>
+      <div class="features-grid">
+        <div class="feature-item animate__animated animate__fadeInLeft">
+          <img width="400" height="auto"  src="Easily create, update and manage your Tasks.png" alt="Task Management">
+          <h3>Task Management</h3>
+          <p>Create, prioritize, and organize tasks effortlessly.</p>
         </div>
-        <div class="p-6 bg-white shadow rounded">
-          <h3 class="text-xl font-bold text-gray-700">Member Dashboard</h3>
-          <p class="mt-2 text-gray-600">View assigned tasks and manage personal plans privately.</p>
+        <div class="feature-item animate__animated animate__fadeInUp">
+          <img width="400" height="auto" src="persoanl life.png" alt="Personal Planning">
+          <h3>Personal Planning</h3>
+          <p>Manage gym schedules, travels, events, and more.</p>
         </div>
-        <div class="p-6 bg-white shadow rounded">
-          <h3 class="text-xl font-bold text-gray-700">Real-Time Updates</h3>
-          <p class="mt-2 text-gray-600">Stay updated with real-time task progress and comments.</p>
+        <div class="feature-item animate__animated animate__fadeInRight">
+          <video id="videos" width="400" height="auto" autoplay loop muted>
+            <source src="reminder.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <h3>Smart Reminders</h3>
+          <p>Set reminders for important deadlines and events.</p>
         </div>
       </div>
     </section>
+
+    <section class="cta-section">
+      <h2>Take Control of Your Day</h2>
+      <p>PlanIt makes it simple to stay organized and productive. Don't wait—start planning today!</p>
+      <a href="register.html"  class="btn-primary">Join Now</a>
+    </section>
   </main>
-  <footer class="bg-gray-800 text-white text-center py-4">
-    <p>&copy; 2024 PlanIt. All rights reserved.</p>
+  
+
+
+  <footer>
+    <div class="footer-container">
+      <div class="footer-about">
+        <h3>About PlanIt</h3>
+        <p>Your all-in-one solution for personal and professional task management.</p>
+      </div>
+      <div class="footer-links">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="login.html">Login</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h3>Contact Us</h3>
+        <p>Email: support@planit.com</p>
+        <p>Phone: +123 456 7890</p>
+      </div>
+    </div>
+    <p>© 2024 PlanIt. All rights reserved.</p>
   </footer>
+  <script type="module">
+    const video = document.getElementById("videos");
+    video.addEventListener("click", () => {
+    if (video.paused) {
+     video.play();
+    } else {
+    video.pause();
+    }
+      });
+  </script>
 </body>
 </html>

@@ -6,31 +6,76 @@
   <title>Admin Dashboard - PlanIt</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
 </head>
 <body class="flex h-screen bg-gray-100">
   <!-- Sidebar -->
-  <aside class="w-1/4 bg-blue-600 text-white p-6">
+  <aside class="w-1/4 bg-gray-600 text-black-700 p-6">
     <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
     <ul>
       <li class="mb-4"><button id="addTaskBtn" class="w-full text-left">Add Task</button></li>
       <li class="mb-4"><button id="viewTasksBtn" class="w-full text-left">View Tasks</button></li>
       <li class="mb-4"><button id="viewMembersBtn" class="w-full text-left">View Members</button></li>
-      <li><button id="logoutBtn" class="w-full text-left text-red-500">Logout</button></li>
+    </ul>
+    <ul>
+      <li><button id="logoutBtn" class="w-full text-left text-red-500 mt-80">Logout</button></li>
     </ul>
   </aside>
 
   <!-- Main Content -->
-  <main class="w-3/4 p-6 overflow-y-auto">
+  <main class="w-3/4 p-6 overflow-y-auto bg-gray-300">
     <div id="content">
       <h2 class="text-3xl font-bold text-gray-800">Welcome, Admin</h2>
       <p class="mt-4 text-gray-600">Select an option from the sidebar to get started.</p>
     </div>
+    <div id="viewTasksSection" class="hidden mt-6">
+      <h3 class="text-xl font-semibold text-gray-800">Tasks</h3>
+      <table class="min-w-full bg-white border border-gray-200 mt-4">
+        <thead>
+          <tr>
+            <th class="py-2 px-4 border-b">Task Name</th>
+            <th class="py-2 px-4 border-b">Assigned To</th>
+            <th class="py-2 px-4 border-b">Deadline</th>
+            <th class="py-2 px-4 border-b">Status</th>
+            <th class="py-2 px-4 border-b">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="taskTableBody"></tbody>
+      </table>
+    </div>
   </main>
 
+  <!-- Add Task Modal -->
+  <div id="addTaskModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded shadow-lg w-1/2">
+      <h3 class="text-xl font-bold text-gray-800">Add Task</h3>
+      <form id="addTaskForm" class="mt-4">
+        <input type="text" id="taskName" placeholder="Task Name" required class="w-full p-2 border rounded mb-4" />
+        <select id="assignTo" required class="w-full p-2 border rounded mb-4">
+          <option value="" disabled selected>Assign to</option>
+        </select>
+        <input type="date" id="deadline" required class="w-full p-2 border rounded mb-4" />
+        <div class="flex justify-end">
+          <button type="button" id="cancelAddTask" class="mr-4 px-4 py-2 bg-red-500 text-white rounded">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-gray-600 text-amber-600 rounded">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Comment Modal -->
+  <div id="addCommentModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded shadow-lg w-1/2">
+      <h3 class="text-xl font-bold text-gray-800">Add Comment</h3>
+      <textarea id="commentText" placeholder="Enter comment..." class="w-full p-2 border rounded mb-4" rows="4"></textarea>
+      <div class="flex justify-end">
+        <button type="button" id="cancelAddComment" class="mr-4 px-4 py-2 bg-gray-500 text-white rounded">Cancel</button>
+        <button id="submitComment" class="px-4 py-2 bg-blue-600 text-white rounded">Add Comment</button>
+      </div>
+    </div>
+  </div>
   <!-- Member Statistics Modal -->
   <div id="statsModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
     <div class="bg-white p-6 rounded shadow-lg w-3/4">
@@ -51,7 +96,11 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyAbURzMdeO-6d2srBSiYXqZkvn8l9Z9G-U",
       authDomain: "planit-82761.firebaseapp.com",
@@ -62,29 +111,65 @@
     };
 
     // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const { Timestamp } = firebase.firestore;
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const logoutBtn = document.getElementById("logoutBtn");
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const viewTasksBtn = document.getElementById("viewTasksBtn");
     const viewMembersBtn = document.getElementById("viewMembersBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const content = document.getElementById("content");
+    const addTaskModal = document.getElementById("addTaskModal");
+    const addTaskForm = document.getElementById("addTaskForm");
+    const cancelAddTask = document.getElementById("cancelAddTask");
+    const assignTo = document.getElementById("assignTo");
     const statsModal = document.getElementById("statsModal");
     const closeStatsModal = document.getElementById("closeStatsModal");
     const memberSelect = document.getElementById("memberSelect");
     const exportCSVBtn = document.getElementById("exportCSVBtn");
+    const viewTasksSection = document.getElementById("viewTasksSection");
+    const taskTableBody = document.getElementById("taskTableBody");
+    const addCommentModal = document.getElementById("addCommentModal");
+    const cancelAddComment = document.getElementById("cancelAddComment");
+    const submitComment = document.getElementById("submitComment");
+    const commentText = document.getElementById("commentText");
 
+    let currentTaskId = null;
     let chart;
 
-    // Load Members into Dropdown
+    // Load members into dropdown
     async function loadMembers() {
       const members = [];
-      const q = query(collection(db, "users"), where("role", "==", "member"));
+      const q = query(collection(db, "users"), where("role", "==", "user"));
       const snapshot = await getDocs(q);
       snapshot.forEach((doc) => {
         members.push({ id: doc.id, email: doc.data().email });
       });
+      const content = document.getElementById("content");
 
+function hideWelcomeMessage() {
+  content.classList.add("hidden");
+}
+
+// Example usage on sidebar button clicks
+viewTasksBtn.addEventListener("click", () => {
+  hideWelcomeMessage();
+  document.getElementById("viewTasksSection").classList.remove("hidden");
+  loadTasks();
+});
+
+
+      // Populate assignTo dropdown in Add Task modal
+      assignTo.innerHTML = `<option value="" disabled selected>Assign to</option>`;
+      members.forEach((member) => {
+        const option = document.createElement("option");
+        option.value = member.id;
+        option.textContent = member.email;
+        assignTo.appendChild(option);
+      });
+
+      // Populate memberSelect dropdown in Member Stats modal
       memberSelect.innerHTML = `<option value="" disabled selected>Select a Member</option>`;
       members.forEach((member) => {
         const option = document.createElement("option");
@@ -94,101 +179,74 @@
       });
     }
 
-    // Show Statistics Modal
-    viewMembersBtn.addEventListener("click", async () => {
-      await loadMembers();
-      statsModal.classList.remove("hidden");
-    });
-
-    // Close Statistics Modal
-    closeStatsModal.addEventListener("click", () => {
-      statsModal.classList.add("hidden");
-    });
-
-    // Fetch and Display Data
-    async function fetchAndDisplayData(memberId, filter) {
-      let startDate, endDate;
-      const now = new Date();
-      if (filter === "day") {
-        startDate = new Date(now.setHours(0, 0, 0, 0));
-        endDate = new Date(now.setHours(23, 59, 59, 999));
-      } else if (filter === "month") {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      } else if (filter === "year") {
-        startDate = new Date(now.getFullYear(), 0, 1);
-        endDate = new Date(now.getFullYear(), 11, 31);
-      }
-
-      const tasksQuery = query(
-        collection(db, "tasks"),
-        where("assignedTo", "==", memberId),
-        where("createdAt", ">=", Timestamp.fromDate(startDate)),
-        where("createdAt", "<=", Timestamp.fromDate(endDate))
-      );
-
-      const snapshot = await getDocs(tasksQuery);
-      const tasks = [];
-      const statuses = { completed: 0, pending: 0, overdue: 0 };
+    // Load and display tasks
+    async function loadTasks() {
+      const q = query(collection(db, "tasks"));
+      const snapshot = await getDocs(q);
+      taskTableBody.innerHTML = "";
 
       snapshot.forEach((doc) => {
-        tasks.push(doc.data());
-        statuses[doc.data().status]++;
+        const task = doc.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="py-2 px-4 border-b">${task.taskName}</td>
+          <td class="py-2 px-4 border-b">${task.assignedTo}</td>
+          <td class="py-2 px-4 border-b">${task.deadline}</td>
+          <td class="py-2 px-4 border-b">${task.status}</td>
+          <td class="py-2 px-4 border-b">
+            <button class="text-blue-600" edit-Task('${doc.id}')">Edit</button>
+            <button class="text-red-600 ml-4" delete-Task('${doc.id}')">Delete</button>
+          </td>
+        `;
+        // Add event listeners for status update and comments
+      const editTask = row.querySelector(".edit-Task");
+      const deleteTask = row.querySelector(".delete-Task");
+
+        taskTableBody.appendChild(row);
       });
-
-      displayChart(statuses);
-
-      exportCSVBtn.addEventListener("click", () => exportAsCSV(tasks));
+      
     }
 
-    // Display Chart
-    function displayChart(data) {
-      const ctx = document.getElementById("taskChart").getContext("2d");
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: "pie",
-        data: {
-          labels: ["Completed", "Pending", "Overdue"],
-          datasets: [
-            {
-              data: [data.completed, data.pending, data.overdue],
-              backgroundColor: ["#4caf50", "#ff9800", "#f44336"],
-            },
-          ],
-        },
-      });
-    }
+    // Add Task
+    addTaskForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const taskName = document.getElementById("taskName").value;
+      const assignedTo = document.getElementById("assignTo").value;
+      const deadline = document.getElementById("deadline").value;
 
-    // Export as CSV
-    function exportAsCSV(tasks) {
-      const rows = [["Task Name", "Status", "Created At"]];
-      tasks.forEach((task) => {
-        rows.push([task.taskName, task.status, task.createdAt.toDate().toISOString()]);
-      });
+      try {
+        await addDoc(collection(db, "tasks"), {
+          taskName,
+          assignedTo,
+          deadline,
+          status: "Pending",
+          comments: [],
+          createdAt: Timestamp.now(),  // Add timestamp
+        });
+        alert("Task added successfully!");
+        addTaskModal.classList.add("hidden");
+        loadTasks(); // Refresh tasks
+      } catch (error) {
+        alert("Error adding task:", error.message);
+      }
+    });
 
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        rows.map((row) => row.join(",")).join("\n");
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "tasks.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    // Close Add Task Modal
+    cancelAddTask.addEventListener("click", () => {
+      addTaskModal.classList.add("hidden");
+    });
 
-    // Filter Statistics
-    document.querySelectorAll(".filterBtn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const filter = e.target.dataset.filter;
-        const memberId = memberSelect.value;
-        if (!memberId) {
-          alert("Please select a member first.");
-          return;
-        }
-        fetchAndDisplayData(memberId, filter);
-      });
+    // Show Add Task Modal
+    addTaskBtn.addEventListener("click", () => {
+      loadMembers(); // Load members before showing the modal
+      addTaskModal.classList.remove("hidden");
+    });
+
+    // Show View Tasks Section
+    viewTasksBtn.addEventListener("click", () => {
+      content.classList.add("hidden");
+      viewTasksSection.classList.remove("hidden");
+      loadTasks(); // Load tasks when view tasks button is clicked
     });
 
     // Logout
@@ -197,9 +255,38 @@
         await signOut(auth);
         window.location.href = "login.html";
       } catch (error) {
-        console.error("Logout error:", error.message);
+        alert("Error signing out:", error.message);
       }
     });
+
+    async function loadAllUsers() {
+  try {
+    const snapshot = await firebase.firestore().collection("users").get();
+    const userTableBody = document.getElementById("userTableBody");
+    userTableBody.innerHTML = "";
+
+    snapshot.forEach((doc) => {
+      const user = doc.data();
+      const row = `
+        <tr>
+          <td class="py-2 px-4 border-b">${user.firstName} ${user.surname}</td>
+          <td class="py-2 px-4 border-b">${user.email}</td>
+          <td class="py-2 px-4 border-b">${user.phone}</td>
+        </tr>
+      `;
+      userTableBody.innerHTML += row;
+    });
+  } catch (error) {
+    console.error("Error loading users:", error.message);
+  }
+}
+
+// Call the function to load all users
+loadAllUsers();
+
+
+    // Load members initially when page is ready
+    window.addEventListener("load", loadMembers);
   </script>
 </body>
 </html>

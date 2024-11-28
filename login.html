@@ -5,38 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - PlanIt</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+  <style>
+    body {
+      background-image: url('login.webp');
+      background-size: cover; /* Ensures the image covers the entire background */
+      background-repeat: no-repeat; /* Prevents the image from repeating */
+      background-position: center; /* Centers the image */
+      min-height: 100vh; /* Ensures the body covers the full height of the viewport */
+    }
+  </style>
 </head>
-<body class="bg-gray-100">
 
   <!-- Navbar -->
-  <nav class="flex justify-between items-center p-4 bg-blue-600 text-white">
-    <div class="text-2xl font-semibold">PlanIt</div>
-    <ul class="flex space-x-4">
+  <nav class="navbar">
+    <div class="logo">
+      <img src="Planit.png" alt="PlanIt Logo">
+      <span>PlanIt</span>
+    </div>
+    <ul class="nav-links">
       <li><a href="index.html" class="hover:underline">Home</a></li>
-      <li><a href="register.html" class="hover:underline">Register</a></li>
+      <li><a href="register.html" class="hover:underline bg-amber-600 ">Register</a></li>
     </ul>
   </nav>
 
-  <div class="max-w-lg mx-auto p-6 mt-10 bg-white shadow-md rounded-md">
-    <h1 class="text-2xl font-bold text-gray-800 mb-4">Login to PlanIt</h1>
+  <div class="max-w-lg mx-auto p-6 mt-10 bg-gray-100 bg-opacity-50 shadow-lg rounded-lg mb-10">
+    <h1 class="text-2xl font-bold text-black-800 mb-4">Login to PlanIt</h1>
     <form id="loginForm">
       <div class="mb-4">
-        <label for="email" class="block text-gray-700">Email</label>
+        <label for="email" class="block text-black-700">Email</label>
         <input type="email" id="email" class="w-full p-2 border rounded" placeholder="Enter your email" required>
       </div>
       <div class="mb-4">
-        <label for="password" class="block text-gray-700">Password</label>
+        <label for="password" class="block text-black-700">Password</label>
         <input type="password" id="password" class="w-full p-2 border rounded" placeholder="Enter your password" required>
       </div>
-      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
+      <button type="submit" class="w-full bg-gray-600 text-amber-600 py-2 rounded hover:bg-gray-900">Login</button>
     </form>
-    <p class="text-center mt-4">Don't have an account? <a href="register.html" class="text-blue-600">Register</a></p>
+    <p class="text-center mt-4">Don't have an account? <a href="register.html" class="text-amber-600">Register</a></p>
   </div>
+  <footer>
+    <div class="footer-container">
+      <div class="footer-about">
+        <h3>About PlanIt</h3>
+        <p>Your all-in-one solution for personal and professional task management.</p>
+      </div>
+      <div class="footer-links">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="login.html">Login</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h3>Contact Us</h3>
+        <p>Email: support@planit.com</p>
+        <p>Phone: +123 456 7890</p>
+      </div>
+    </div>
+    <p>© 2024 PlanIt. All rights reserved.</p>
+  </footer>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
     // Firebase configuration and initialization
     const firebaseConfig = {
       apiKey: "AIzaSyAbURzMdeO-6d2srBSiYXqZkvn8l9Z9G-U",
@@ -48,9 +83,9 @@
     };
 
     // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
 
     // Login function
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
@@ -60,21 +95,21 @@
 
       try {
         // Sign in the user
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
         
         // Fetch the user's role from Firestore
-        const userRef = db.collection("users").doc(userCredential.user.uid);
-        const userDoc = await userRef.get();
-
-        if (userDoc.exists) {
+        const userDocRef = doc(collection(db, "users"), user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists ()) {
           const userData = userDoc.data();
           const userRole = userData.role;
 
           // Redirect based on user role
           if (userRole === "admin") {
             window.location.href = "admin-dashboard.html"; // Admin dashboard
-          } else if (userRole === "member") {
-            window.location.href = "member-dashboard.html"; // Member dashboard
+          } else if (userRole === "user") {
+            window.location.href = "user-dashboard.html"; // Member dashboard
           } else {
             alert("User role is not defined properly.");
           }
